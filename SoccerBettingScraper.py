@@ -1,26 +1,41 @@
 import datetime
+from datetime import datetime, timedelta
+
 import praw
 
-reddit = praw.Reddit(client_id='<id>', \
-                     client_secret='<secret>', \
+reddit = praw.Reddit(client_id='WMX9GgDwAmbZ5Q',
+                     client_secret='RIHACIOMK04v7hOZgP_of2f2ZII',
                      user_agent='Scraper')
 
-# team = input("Team: ")
-team = "valencia"
-new_posts = list(reddit.subreddit('SoccerBetting').new(limit=50))
+teams = input("Team: ").lower().split(" ")
+# team = "torino"
+new_posts = list(reddit.subreddit('SoccerBetting').new(limit=1000))
+
+
+def filter_last_week(s):
+    week = datetime.utcnow() - timedelta(hours=168)
+    return datetime.fromtimestamp(s) >= week
+
+
+def print_entry():
+    for item in str(body).split("\n"):
+        for t in teams:
+            if t.lower() in item.lower():
+                print(datetime.fromtimestamp(submission.created), " || ",
+                      submission.title, " || ",
+                      str(item).lower().replace(str(t), '\x1b[4;30;47m' + t + '\x1b[0m'))
+    print("More: " + "https://www.reddit.com" + submission.permalink + str(comment))
+
 
 for submission in new_posts:
-    submission.comments.replace_more(limit=0)
-    comments = submission.comments.list()
-    for comment in comments:
-        if comment:
-            cbody = comment.body
-            if any(keyword.lower() in cbody.lower() for keyword in [team]):
-                print("==========================================")
-                for item in str(cbody).split("\n"):
-                    if team.lower() in item.lower():
-                        print(datetime.datetime.fromtimestamp(submission.created), " || ",
-                              submission.title, " || ", item.strip())
-                print("More: " + "https://www.reddit.com" + submission.permalink + str(comment))
+    if filter_last_week(submission.created):
+        submission.comments.replace_more(limit=0)
+        comments = submission.comments.list()
+        for comment in comments:
+            if comment:
+                body = comment.body
+                if any(keyword.lower() in body.lower() for keyword in teams):
+                    print("=======================================================================================")
+                    print_entry()
 
 print("\nGood luck :)")
